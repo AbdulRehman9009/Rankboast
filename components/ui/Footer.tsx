@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import Link from "next/link"
-import { Zap, Github, Twitter, Linkedin } from "lucide-react" // Removed 'Mail' to fix lint error
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { Zap, Github, Twitter, Linkedin } from "lucide-react";
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear()
-  
+  const currentYear = new Date().getFullYear();
+
   const sections = [
     {
       title: "Product",
@@ -24,14 +24,15 @@ const Footer = () => {
         { name: "SEO Guide", href: "#" },
       ],
     },
-  ]
+  ];
 
   return (
-    <motion.footer 
+    <motion.footer
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
-      className="mt-20 border-t border-border bg-card/30 py-12 px-6 sm:px-12"
+      // Fix applied: made opaque bg-card and optional glass effect
+      className="mt-20 border-t border-border bg-card py-12 px-6 sm:px-12 backdrop-blur-md"
     >
       <div className="mx-auto max-w-7xl">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-4">
@@ -88,7 +89,7 @@ const Footer = () => {
         </div>
       </div>
     </motion.footer>
-  )
-}
+  );
+};
 
-export default Footer
+export default Footer;

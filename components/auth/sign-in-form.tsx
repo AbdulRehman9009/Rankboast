@@ -16,7 +16,7 @@ export function SignInForm() {
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  
+
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -49,15 +49,18 @@ export function SignInForm() {
 
       if (result?.error) {
         setError("Invalid email or password. Please try again.");
+        setIsLoading(false);
         return;
       }
 
       if (result?.ok) {
-        router.push("/dashboard");
+        setSuccessMessage("Sign in successful! Redirecting to your dashboard...");
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 800);
       }
     } catch (err) {
       setError("Something went wrong. Please check your connection.");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -137,7 +140,7 @@ export function SignInForm() {
                   Password
                 </label>
                 <Link href="/auth/forgot-password" className="text-xs text-indigo-500 hover:text-indigo-400">
-                   Forgot?
+                  Forgot?
                 </Link>
               </div>
               <div className="relative">

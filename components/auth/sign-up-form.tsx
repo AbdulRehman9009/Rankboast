@@ -16,7 +16,8 @@ export function SignUpForm() {
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
-  
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
   const router = useRouter();
 
   const {
@@ -30,6 +31,7 @@ export function SignUpForm() {
   const onSubmit = async (data: SignUpFormInput) => {
     setIsLoading(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
       const response = await fetch("/api/auth/signup", {
@@ -46,13 +48,17 @@ export function SignUpForm() {
 
       if (!response.ok) {
         setError(result.error || "Failed to create account");
+        setIsLoading(false);
         return;
       }
 
-      router.push("/auth/signin?message=Account created successfully. Please sign in.");
+      setSuccessMessage("Account created successfully! Redirecting...");
+      setTimeout(() => {
+        router.push("/auth/signin?message=Account created successfully. Please sign in.");
+      }, 1500);
+
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -76,6 +82,11 @@ export function SignUpForm() {
         </div>
 
         <div className="bg-card text-card-foreground shadow-xl border border-border rounded-2xl p-6 sm:p-8 backdrop-blur-sm">
+          {successMessage && (
+            <div className="bg-green-500/15 border border-green-500/30 rounded-lg p-3 text-green-600 dark:text-green-400 text-sm mb-6 animate-in fade-in zoom-in">
+              {successMessage}
+            </div>
+          )}
           {/* Google Auth Option */}
           <Button
             type="button"

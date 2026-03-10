@@ -1,8 +1,8 @@
 import { withAuth } from "next-auth/middleware";
 import { NextRequest } from "next/server";
 
-export const middleware = withAuth(
-  function middleware(req: NextRequest) {
+export const proxy = withAuth(
+  function proxy(req: NextRequest) {
     return;
   },
   {
@@ -16,10 +16,10 @@ export const middleware = withAuth(
         const isProtectedPath = protectedPaths.some((path) => req.nextUrl.pathname.startsWith(path));
 
         if (isProtectedPath) {
-          return !!token; 
+          return !!token;
         }
 
-        return true; 
+        return true;
       },
     },
     pages: {

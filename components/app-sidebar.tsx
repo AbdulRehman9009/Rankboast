@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Users, CheckSquare, LineChart, LogOut, Loader2 } from "lucide-react";
+import { Home, Users, CheckSquare, LineChart, LogOut, Loader2, FileText } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -43,6 +43,11 @@ const items = [
         url: "/analytics",
         icon: LineChart,
     },
+    {
+        title: "Content Generator",
+        url: "/contentgenerator",
+        icon: FileText,
+    }
 ];
 
 export function AppSidebar() {

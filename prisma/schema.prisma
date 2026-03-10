@@ -18,10 +18,11 @@ model User {
   // Relations
   accounts      Account[]
   sessions      Session[]
-  analyses      Analysis[]
+  analysis      Analysis[]
   competitors   Competitor[]
   reports       Report[]
   resetTokens   PasswordResetToken[]
+  generated     GeneratedContent[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -75,11 +76,11 @@ model PasswordResetToken {
   @@index([userId])
 }
 
-// Core SEO Analysis model [cite: 561, 606]
+
 model Analysis {
   id           String   @id @default(cuid())
   userId       String
-  url          String?  // Optional if analyzing raw text
+  url          String?  
   title        String
   content      String?  @db.Text
   seoScore     Int      @default(0) // 0-100 scale [cite: 562]
@@ -90,10 +91,10 @@ model Analysis {
   updatedAt    DateTime @updatedAt
 }
 
-// Competitor Research model 
 model Competitor {
   id            String   @id @default(cuid())
   userId        String
+  userUrl       String?
   competitorUrl String
   metricsJson   Json     // Stores competitor SEO data [cite: 606]
   
@@ -109,4 +110,24 @@ model Report {
   
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
+}
+
+model GeneratedContent {
+  id              String   @id @default(cuid())
+  userId          String
+  topic           String
+  keywords        String   
+  keywordsUsed    String[] 
+  tone            String
+  audience        String
+  wordCount       Int
+  
+  seoTitle        String   @db.VarChar(255)
+  metaDescription String   @db.Text
+  articleBody     String   @db.Text 
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

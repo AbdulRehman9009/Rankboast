@@ -5,6 +5,7 @@ import "./globals.css";
 import Providers from "@/components/providers";
 import Navbar from "@/components/ui/Navbar";
 import Footer from "@/components/ui/Footer";
+import NextTopLoader from 'nextjs-toploader';
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -25,6 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${roboto.variable} font-sans antialiased`}>
+        <NextTopLoader color="#2632b0ff" height={2} />
         <Providers>
           <Navbar />
           <main>

@@ -3,6 +3,11 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import {
+  TrendingUp, BarChart2, CheckSquare, Users, FileText,
+  Sparkles, ArrowRight, Link2,
+} from "lucide-react";
 
 interface Activity {
   id: string;
@@ -11,166 +16,222 @@ interface Activity {
   status: string;
   date: string;
   color: "emerald" | "indigo" | "amber";
+  score?: number;
 }
+
+interface Stats {
+  totalAudits: number;
+  totalComparisons: number;
+  totalContent: number;
+  avgScore: number;
+}
+
+const COLOR_DOT: Record<string, string> = {
+  emerald: "bg-emerald-500",
+  indigo: "bg-indigo-500",
+  amber: "bg-amber-500",
+};
+const COLOR_BADGE: Record<string, string> = {
+  emerald: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+  indigo: "bg-indigo-500/10  text-indigo-500  border-indigo-500/20",
+  amber: "bg-amber-500/10   text-amber-400   border-amber-500/20",
+};
+
+const QUICK_CARDS = [
+  {
+    title: "Competitor Analysis",
+    desc: "Compare SEO metrics against industry leaders.",
+    href: "/competitors",
+    icon: <Users className="h-5 w-5" />,
+    color: "text-indigo-500 bg-indigo-500/10",
+    cta: "Run comparison",
+  },
+  {
+    title: "SEO Audit",
+    desc: "Analyze pages for SEO gaps and opportunities.",
+    href: "/audit",
+    icon: <CheckSquare className="h-5 w-5" />,
+    color: "text-emerald-500 bg-emerald-500/10",
+    cta: "Run new audit",
+  },
+  {
+    title: "Analytics",
+    desc: "Review historical data and track growth trends.",
+    href: "/analytics",
+    icon: <BarChart2 className="h-5 w-5" />,
+    color: "text-cyan-500 bg-cyan-500/10",
+    cta: "View analytics",
+  },
+  {
+    title: "Content Generator",
+    desc: "Generate SEO-optimised articles in seconds.",
+    href: "/contentgenerator",
+    icon: <FileText className="h-5 w-5" />,
+    color: "text-amber-500 bg-amber-500/10",
+    cta: "Generate content",
+  },
+];
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [isLoadingActivity, setIsLoadingActivity] = useState(true);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/signin");
-    }
+    if (status === "unauthenticated") router.push("/auth/signin");
   }, [status, router]);
 
   useEffect(() => {
     if (status === "authenticated") {
       fetch("/api/activity")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.data) {
-            setActivities(data.data);
-          }
+        .then(r => r.json())
+        .then(d => {
+          if (d.data) setActivities(d.data);
+          if (d.stats) setStats(d.stats);
         })
-        .finally(() => setIsLoadingActivity(false));
+        .finally(() => setIsLoading(false));
     }
   }, [status]);
 
-  if (!isMounted || status === "loading") {
+  if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-muted-foreground font-medium animate-pulse">Loading...</div>
+        <div className="text-muted-foreground font-medium animate-pulse">Loading…</div>
       </div>
     );
   }
+  if (!session) return null;
 
-  if (!session) {
-    return null;
-  }
+  const firstName = session.user?.name?.split(" ")[0] || "there";
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
 
-        {/* Header */}
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back, <span className="font-semibold text-foreground">{session.user?.name || "User"}</span>. Here&apos;s an overview of your projects.
-          </p>
+        {/* ── Header ─────────────────────────────────────────────────────── */}
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <p className="text-muted-foreground text-sm">{greeting} 👋</p>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-0.5">
+              Welcome back, <span className="text-indigo-400">{firstName}</span>
+            </h1>
+          </div>
+          {stats && (
+            <div className="flex items-center gap-1.5 self-start sm:self-auto bg-indigo-500/10 border border-indigo-500/20 rounded-full px-3 py-1.5 text-xs text-indigo-400 font-semibold">
+              <TrendingUp className="h-3.5 w-3.5" />
+              Avg SEO Score: {stats.avgScore}/100
+            </div>
+          )}
         </div>
 
-        {/* Quick Actions / Metrics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Competitors Card */}
-          <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-card-foreground">Competitors Tracking</h3>
-              <div className="p-2 bg-indigo-500/10 text-indigo-500 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-users"><path d="M16 21v-2a4 4 backwards 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+        {/* ── Live stat chips ─────────────────────────────────────────────── */}
+        {stats && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Total Audits", value: stats.totalAudits, icon: <CheckSquare className="h-4 w-4" />, color: "text-emerald-400 bg-emerald-500/10" },
+              { label: "Comparisons", value: stats.totalComparisons, icon: <Users className="h-4 w-4" />, color: "text-indigo-400  bg-indigo-500/10" },
+              { label: "Content Generated", value: stats.totalContent, icon: <FileText className="h-4 w-4" />, color: "text-amber-400  bg-amber-500/10" },
+              { label: "Avg SEO Score", value: `${stats.avgScore}/100`, icon: <Sparkles className="h-4 w-4" />, color: "text-cyan-400   bg-cyan-500/10" },
+            ].map(s => (
+              <div key={s.label} className="rounded-xl border border-border bg-card p-4 flex items-center gap-3 shadow-sm">
+                <div className={`p-2 rounded-lg shrink-0 ${s.color}`}>{s.icon}</div>
+                <div className="min-w-0">
+                  <p className="text-[11px] text-muted-foreground truncate">{s.label}</p>
+                  <p className="text-lg font-bold tracking-tight">{s.value}</p>
+                </div>
               </div>
-            </div>
-            <p className="text-sm text-muted-foreground mb-6">Compare your SEO metrics against top industry leaders.</p>
-            <a href="/competitors" className="inline-flex items-center justify-center text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 group-hover:underline">
-              View competitors &rarr;
-            </a>
+            ))}
           </div>
+        )}
 
-          {/* Audit Card */}
-          <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-card-foreground">Content Audit</h3>
-              <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-check-square"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="m9 12 2 2 4-4" /></svg>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground mb-6">Analyze pages for SEO gaps and optimization opportunities.</p>
-            <a href="/audit" className="inline-flex items-center justify-center text-sm font-medium transition-colors focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 text-emerald-500 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-300 group-hover:underline">
-              Run new audit &rarr;
-            </a>
-          </div>
-
-          {/* Analytics Card */}
-          <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-card-foreground">Overall Analytics</h3>
-              <div className="p-2 bg-amber-500/10 text-amber-500 rounded-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-line-chart"><path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-3 3" /></svg>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground mb-6">Review historical data and track long-term growth trends.</p>
-            <button disabled className="inline-flex items-center justify-center text-sm font-medium opacity-50 cursor-not-allowed">
-              Coming soon
-            </button>
+        {/* ── Quick Action Cards ──────────────────────────────────────────── */}
+        <div>
+          <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-indigo-500" /> Quick Actions
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            {QUICK_CARDS.map(c => (
+              <Link key={c.href} href={c.href}
+                className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm hover:shadow-md hover:border-indigo-500/30 transition-all flex flex-col gap-3">
+                <div className={`p-2.5 rounded-lg self-start ${c.color}`}>{c.icon}</div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm text-card-foreground">{c.title}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{c.desc}</p>
+                </div>
+                <span className="text-xs font-semibold text-indigo-400 flex items-center gap-1 group-hover:gap-2 transition-all">
+                  {c.cta} <ArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </Link>
+            ))}
           </div>
         </div>
 
-        {/* Recent Activity Table */}
+        {/* ── Recent Activity Table ───────────────────────────────────────── */}
         <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-          <div className="p-6 border-b border-border">
-            <h2 className="text-xl font-semibold text-card-foreground">Recent Activity</h2>
-            <p className="text-sm text-muted-foreground mt-1">Your latest audits and competitor comparisons.</p>
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+            <div>
+              <h2 className="text-base font-semibold text-card-foreground">Recent Activity</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Your latest audits, analyses, and content — live from the database.</p>
+            </div>
+            <Link href="/analytics" className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 transition-colors">
+              View all <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-muted/50 text-muted-foreground border-b border-border">
+            <table className="w-full text-sm text-left min-w-[500px]">
+              <thead className="bg-muted/40 text-muted-foreground border-b border-border text-[11px] sm:text-xs uppercase tracking-wider">
                 <tr>
-                  <th scope="col" className="px-6 py-4 font-medium">Activity</th>
-                  <th scope="col" className="px-6 py-4 font-medium">Target URL</th>
-                  <th scope="col" className="px-6 py-4 font-medium">Status</th>
-                  <th scope="col" className="px-6 py-4 font-medium text-right">Date</th>
+                  <th className="px-5 py-3 font-semibold">Activity</th>
+                  <th className="px-5 py-3 font-semibold">Target</th>
+                  <th className="px-5 py-3 font-semibold">Status</th>
+                  <th className="px-5 py-3 font-semibold text-right">When</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {isLoadingActivity ? (
-                  Array.from({ length: 3 }).map((_, i) => (
+                {isLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      <td className="px-6 py-4"><div className="h-4 bg-muted rounded w-3/4"></div></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-muted rounded w-3/4"></div></td>
-                      <td className="px-6 py-4"><div className="h-6 bg-muted rounded-full w-20"></div></td>
-                      <td className="px-6 py-4"><div className="h-4 bg-muted rounded w-1/2 ml-auto"></div></td>
+                      <td className="px-5 py-3.5"><div className="h-4 bg-muted rounded w-28" /></td>
+                      <td className="px-5 py-3.5"><div className="h-4 bg-muted rounded w-40" /></td>
+                      <td className="px-5 py-3.5"><div className="h-5 bg-muted rounded-full w-16" /></td>
+                      <td className="px-5 py-3.5"><div className="h-4 bg-muted rounded w-16 ml-auto" /></td>
                     </tr>
                   ))
                 ) : activities.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-8 text-center text-muted-foreground flex items-center justify-center">
-                      No recent activity found. Start an audit to see them here!
+                    <td colSpan={4} className="px-5 py-10 text-center text-muted-foreground text-sm">
+                      No activity yet — run your first audit or competitor analysis to see results here.
                     </td>
                   </tr>
                 ) : (
-                  activities.map((act) => {
-                    const colorClasses: Record<string, string> = {
-                      emerald: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-                      indigo: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
-                      amber: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-                    };
-                    const dotClass: Record<string, string> = {
-                      emerald: "bg-emerald-500",
-                      indigo: "bg-indigo-500",
-                      amber: "bg-amber-500",
-                    };
-                    return (
-                      <tr key={act.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="px-6 py-4 font-medium text-foreground flex items-center gap-2">
-                          <div className={`h-2 w-2 rounded-full ${dotClass[act.color] || "bg-slate-500"}`}></div> {act.type}
-                        </td>
-                        <td className="px-6 py-4 text-muted-foreground">{act.url}</td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${colorClasses[act.color] || colorClasses.emerald}`}>
-                            {act.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right text-muted-foreground">{act.date}</td>
-                      </tr>
-                    );
-                  })
+                  activities.map(act => (
+                    <tr key={act.id} className="hover:bg-muted/20 transition-colors">
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-2 font-medium text-foreground text-sm">
+                          <div className={`h-2 w-2 rounded-full shrink-0 ${COLOR_DOT[act.color] || "bg-slate-500"}`} />
+                          {act.type}
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-1 text-muted-foreground text-xs max-w-[200px]">
+                          <Link2 className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{act.url}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${COLOR_BADGE[act.color]}`}>
+                          {act.status}{act.score != null ? ` · ${act.score}` : ""}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-right text-muted-foreground text-xs whitespace-nowrap">
+                        {act.date}
+                      </td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>

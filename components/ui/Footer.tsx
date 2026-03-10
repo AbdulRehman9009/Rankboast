@@ -3,15 +3,25 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Zap, Github, Twitter, Linkedin } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { status } = useSession();
+  const pathname = usePathname();
+
+  const isProtectedRoute = pathname?.startsWith('/dashboard') || pathname?.startsWith('/audit') || pathname?.startsWith('/competitors');
+
+  if (isProtectedRoute) {
+    return null;
+  }
 
   const sections = [
     {
       title: "Product",
       links: [
-        { name: "Dashboard", href: "/dashboard" },
+        { name: status === "authenticated" ? "Dashboard" : "Get Started", href: status === "authenticated" ? "/dashboard" : "/auth/signup" },
         { name: "Competitor Gap", href: "/competitors" },
         { name: "Content Audit", href: "/audit" },
       ],
@@ -31,12 +41,11 @@ const Footer = () => {
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
-      // Fix applied: made opaque bg-card and optional glass effect
       className="mt-20 border-t border-border bg-card py-12 px-6 sm:px-12 backdrop-blur-md"
     >
       <div className="mx-auto max-w-7xl">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-4">
-          
+
           <div className="col-span-1 md:col-span-2 space-y-4">
             <Link href="/" className="flex items-center gap-2 group">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand shadow-glow transition-transform group-hover:rotate-12">
@@ -65,8 +74,8 @@ const Footer = () => {
               <ul className="space-y-2">
                 {section.links.map((link) => (
                   <li key={link.name}>
-                    <Link 
-                      href={link.href} 
+                    <Link
+                      href={link.href}
                       className="text-sm text-muted-foreground hover:text-brand transition-colors"
                     >
                       {link.name}

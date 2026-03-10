@@ -4,9 +4,20 @@ import { motion } from "framer-motion" // Note: standard import for Framer Motio
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/Themetoggle"
-import { LayoutDashboard, Globe, FileText, Zap } from "lucide-react"
+import { Zap } from "lucide-react"
+import { useSession } from "next-auth/react"
+import { usePathname } from "next/navigation"
 
 const Navbar = () => {
+  const { data: session, status } = useSession()
+  const pathname = usePathname()
+
+  const isProtectedRoute = pathname?.startsWith('/dashboard') || pathname?.startsWith('/audit') || pathname?.startsWith('/competitors');
+
+  if (isProtectedRoute) {
+    return null;
+  }
+
   return (
     <motion.nav
       initial={{ opacity: 0, y: -20 }}
@@ -33,13 +44,34 @@ const Navbar = () => {
 
       <div className="flex items-center gap-3">
         <ThemeToggle />
-        <div className="h-4 w-[1px] bg-border mx-1 hidden sm:block" />
-        <Button variant="ghost" size="sm" className="hidden sm:flex">
-          Login
-        </Button>
-        <Button variant="default" size="sm" className="rounded-full px-5">
-          Sign Up
-        </Button>
+        <div className="h-4 w-px bg-border mx-1 hidden sm:block" />
+        {status === "loading" ? (
+          <div className="h-8 w-16 bg-muted animate-pulse rounded-md" />
+        ) : session ? (
+          <>
+            <Link href="/dashboard">
+              <Button variant="ghost" size="sm" className="hidden sm:flex hover:text-brand hover:bg-brand/10 transition-colors">
+                Dashboard
+              </Button>
+            </Link>
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand/10 text-brand font-bold uppercase ring-1 ring-brand/20">
+              {session.user?.name?.[0] || session.user?.email?.[0] || 'U'}
+            </div>
+          </>
+        ) : (
+          <>
+            <Link href="/auth/signin">
+              <Button variant="ghost" size="sm" className="hidden sm:flex">
+                Login
+              </Button>
+            </Link>
+            <Link href="/auth/signup">
+              <Button variant="default" size="sm" className="rounded-full px-5">
+                Sign Up
+              </Button>
+            </Link>
+          </>
+        )}
       </div>
     </motion.nav>
   )

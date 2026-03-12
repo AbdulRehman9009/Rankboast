@@ -5,9 +5,9 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
-// ── Validation schemas ────────────────────────────────────────────────────────
 const updateProfileSchema = z.object({
     name: z.string().min(2).max(80).trim().optional(),
+    siteUrl: z.string().url().max(255).optional().or(z.literal("")),
 });
 
 const changePasswordSchema = z.object({
@@ -32,6 +32,7 @@ export async function GET() {
                 email: true,
                 role: true,
                 subscription: true,
+                siteUrl: true,
                 createdAt: true,
             },
         });
@@ -51,8 +52,9 @@ export async function GET() {
             user,
             stats: { audits, comparisons, content },
         });
-    } catch {
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    } catch (err: any) {
+        console.error("GET /api/profile Error:", err.message, err.stack);
+        return NextResponse.json({ error: "Internal Server Error: " + err.message }, { status: 500 });
     }
 }
 
@@ -70,19 +72,23 @@ export async function PATCH(req: Request) {
             return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
         }
 
-        const { name } = parsed.data;
-        if (!name) {
+        const { name, siteUrl } = parsed.data;
+        if (name === undefined && siteUrl === undefined) {
             return NextResponse.json({ error: "No fields to update" }, { status: 400 });
         }
 
         await prisma.user.update({
             where: { id: session.user.id },
-            data: { name },
+            data: { 
+                ...(name !== undefined && { name }),
+                ...(siteUrl !== undefined && { siteUrl: siteUrl || null }),
+            },
         });
 
         return NextResponse.json({ message: "Profile updated successfully" });
-    } catch {
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    } catch (err: any) {
+        console.error("PATCH /api/profile Error:", err.message, err.stack);
+        return NextResponse.json({ error: "Internal Server Error: " + err.message }, { status: 500 });
     }
 }
 
@@ -124,7 +130,8 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json({ message: "Password changed successfully" });
-    } catch {
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    } catch (err: any) {
+        console.error("POST /api/profile Error:", err.message, err.stack);
+        return NextResponse.json({ error: "Internal Server Error: " + err.message }, { status: 500 });
     }
 }

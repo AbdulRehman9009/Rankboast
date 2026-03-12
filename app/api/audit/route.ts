@@ -6,6 +6,32 @@ import * as cheerio from "cheerio";
 import OpenAI from "openai";
 import { prisma } from "@/lib/prisma";
 
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const audits = await prisma.analysis.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        url: true,
+        title: true,
+        seoScore: true,
+        resultsJson: true,
+        createdAt: true,
+      },
+    });
+    return NextResponse.json({ data: audits }, { status: 200 });
+  } catch (error) {
+    console.error("Error fetching audits:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);

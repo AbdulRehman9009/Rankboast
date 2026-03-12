@@ -6,7 +6,7 @@ import { ThemeToggle } from "@/components/Themetoggle";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
     LogOut, User, Bell, Search, LayoutDashboard, BarChart2,
-    CheckSquare, Users, FileText, X, ChevronRight,
+    CheckSquare, Users, FileText, X, ChevronRight, Airplay,
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -17,6 +17,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useState, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
 
 // ── Breadcrumb map ─────────────────────────────────────────────────────────────
 const PAGE_META: Record<string, { label: string; icon: React.ReactNode }> = {
@@ -25,6 +26,7 @@ const PAGE_META: Record<string, { label: string; icon: React.ReactNode }> = {
     "/competitors": { label: "Competitor Analysis", icon: <Users className="h-3.5 w-3.5" /> },
     "/analytics": { label: "Analytics", icon: <BarChart2 className="h-3.5 w-3.5" /> },
     "/contentgenerator": { label: "Content Generator", icon: <FileText className="h-3.5 w-3.5" /> },
+    "/visualizer": { label: "Visualizer", icon: <Airplay className="h-3.5 w-3.5" /> },
 };
 
 const QUICK_LINKS = [
@@ -163,9 +165,18 @@ export function Topbar() {
 
             {/* ── Topbar ── */}
             <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-30 px-3 sm:px-4">
-                {/* Left: trigger + breadcrumb */}
-                <div className="flex items-center gap-2 min-w-0">
+                {/* Left: trigger + logo (mobile) + breadcrumb (desktop) */}
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                     <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-accent shrink-0" />
+                    {/* Mobile logo – shown instead of breadcrumb on small screens */}
+                    <Link href="/dashboard" className="flex md:hidden items-center gap-1.5 ml-1">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-white font-bold text-sm shrink-0">
+                            R
+                        </div>
+                        <span className="font-bold text-base tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">
+                            RankBoast
+                        </span>
+                    </Link>
                     <div className="w-px h-4 bg-border mx-1 hidden sm:block shrink-0" />
                     {pageMeta && (
                         <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground min-w-0">

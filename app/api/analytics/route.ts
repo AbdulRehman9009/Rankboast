@@ -13,7 +13,7 @@ export async function GET() {
         const userId = session.user.id;
 
         // Fetch all data in parallel
-        const [analyses, competitors, generatedContent] = await Promise.all([
+        const [analyses, competitors, generatedContent, projects] = await Promise.all([
             prisma.analysis.findMany({
                 where: { userId },
                 orderBy: { createdAt: "desc" },
@@ -48,6 +48,18 @@ export async function GET() {
                     createdAt: true,
                 },
             }),
+            prisma.project.findMany({
+                where: { userId },
+                include: {
+                    _count: {
+                        select: { pages: true }
+                    },
+                    pages: {
+                        where: { isOrphan: true },
+                        select: { id: true }
+                    }
+                }
+            })
         ]);
 
         // ── Aggregated summary stats ──────────────────────────────────────────────
@@ -127,6 +139,14 @@ export async function GET() {
                 };
             }),
             contentHistory: generatedContent,
+            internalLinkHealth: projects.map(p => ({
+                domain: p.domain,
+                totalPages: p._count.pages,
+                orphanPages: p.pages.length,
+                healthScore: p._count.pages > 0 
+                  ? Math.round(((p._count.pages - p.pages.length) / p._count.pages) * 100) 
+                  : 100
+            }))
         });
     } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Internal Server Error";

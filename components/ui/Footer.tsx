@@ -10,7 +10,7 @@ const Footer = () => {
   const { status } = useSession();
   const pathname = usePathname();
 
-  const isProtectedRoute = ["/dashboard", "/profile", "/audit", "/competitors", "/analytics", "/contentgenerator"]
+  const isProtectedRoute = ["/dashboard", "/visualizer", "/profile", "/audit", "/competitors", "/analytics", "/contentgenerator"]
     .some(p => pathname?.startsWith(p));
 
   if (isProtectedRoute) return null;

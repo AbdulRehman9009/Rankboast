@@ -14,6 +14,7 @@ model User {
   password      String    
   role          Role      @default(USER) 
   subscription  Tier      @default(FREE) 
+  siteUrl       String?
   
   // Relations
   accounts      Account[]
@@ -23,6 +24,7 @@ model User {
   reports       Report[]
   resetTokens   PasswordResetToken[]
   generated     GeneratedContent[]
+  projects      Project[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -65,7 +67,6 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Replaced VerificationToken with PasswordResetToken as requested
 model PasswordResetToken {
   id        String   @id @default(cuid())
   token     String   @unique
@@ -130,4 +131,31 @@ model GeneratedContent {
   updatedAt       DateTime @updatedAt
 
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  domain    String   
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pages     Page[]
+  createdAt DateTime @default(now())
+
+  @@unique([userId, domain])
+}
+
+model Page {
+  id               String   @id @default(cuid())
+  url              String
+  title            String?
+  contentSnippet   String?  @db.Text
+  outgoingLinks    Page[]   @relation("PageLinks")
+  incomingLinks    Page[]   @relation("PageLinks")
+  aiLinkSuggestion String?  @db.Text 
+  isOrphan         Boolean  @default(false)
+  projectId        String
+  project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+
+  @@unique([projectId, url])
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Users, CheckSquare, LineChart, LogOut, Loader2, FileText } from "lucide-react";
+import { Home, Users, CheckSquare, LineChart, Airplay, User, LogOut, Loader2, FileText } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -47,6 +47,16 @@ const items = [
         title: "Content Generator",
         url: "/contentgenerator",
         icon: FileText,
+    },
+    {
+        title: "Visualizer",
+        url: "/visualizer",
+        icon: Airplay ,
+    },
+    {
+        title: "Profile",
+        url: "/profile",
+        icon: User,
     }
 ];
 

@@ -7,9 +7,10 @@ import {
 } from "recharts";
 import {
     TrendingUp, BarChart2, FileText, Users, CheckCircle2, AlertCircle,
-    XCircle, Globe, Link2, RefreshCw, Loader2, Search, Sparkles,
+    XCircle, Globe, Link2, RefreshCw, Loader2, Search, Sparkles, ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,6 +73,12 @@ interface AnalyticsData {
     auditHistory: AuditRecord[];
     competitorHistory: CompetitorRecord[];
     contentHistory: ContentRecord[];
+    internalLinkHealth: {
+        domain: string;
+        totalPages: number;
+        orphanPages: number;
+        healthScore: number;
+    }[];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -294,6 +301,57 @@ export default function AnalyticsPage() {
                                 <Bar dataKey="Losses" fill="#f43f5e" radius={[0, 4, 4, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
+                    </div>
+                )}
+
+                {/* Internal Link Health Row */}
+                {data.internalLinkHealth.length > 0 && (
+                    <div className="rounded-2xl border border-border bg-card p-4 sm:p-6 shadow-sm">
+                        <h2 className="font-semibold text-sm sm:text-base mb-6 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Link2 className="h-4 w-4 text-indigo-500" />
+                                Internal Link Architecture Health
+                            </div>
+                            <Link href="/visualizer">
+                                <Button variant="link" size="sm" className="text-indigo-400 h-auto p-0 text-xs">View Visualizer <ArrowRight className="ml-1 h-3 w-3" /></Button>
+                            </Link>
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {data.internalLinkHealth.map((project, i) => (
+                                <div key={i} className="bg-muted/30 rounded-xl p-4 border border-border/50 flex flex-col gap-3">
+                                    <div className="flex justify-between items-start">
+                                        <h3 className="font-bold text-sm truncate uppercase tracking-tight">{project.domain}</h3>
+                                        <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                            project.healthScore >= 90 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                                            project.healthScore >= 70 ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                                            "bg-red-500/10 text-red-400 border-red-500/20"
+                                        }`}>
+                                            {project.healthScore}% Health
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-semibold uppercase">Pages</span>
+                                            <span className="text-foreground font-bold">{project.totalPages}</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-semibold uppercase">Orphans</span>
+                                            <span className="text-rose-400 font-bold">{project.orphanPages}</span>
+                                        </div>
+                                    </div>
+                                    <div className="w-full h-1.5 bg-muted rounded-full mt-1 overflow-hidden">
+                                        <div 
+                                            className={`h-full transition-all duration-1000 ${
+                                                project.healthScore >= 90 ? "bg-emerald-500" :
+                                                project.healthScore >= 70 ? "bg-amber-500" :
+                                                "bg-red-500"
+                                            }`}
+                                            style={{ width: `${project.healthScore}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
 

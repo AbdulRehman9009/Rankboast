@@ -21,7 +21,7 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  const isProtectedRoute = ["/dashboard", "/profile", "/audit", "/competitors", "/contentgenerator", "/analytics"]
+  const isProtectedRoute = ["/dashboard", "/visualizer", "/profile", "/audit", "/competitors", "/contentgenerator", "/analytics"]
     .some(p => pathname?.startsWith(p));
 
   useEffect(() => {

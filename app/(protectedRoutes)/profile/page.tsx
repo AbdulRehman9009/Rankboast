@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
     User, Mail, Shield, Crown, Edit2, Save, X,
     Lock, CheckCircle2, AlertCircle, Loader2, BarChart2,
-    Search, FileText, Calendar,
+    Search, FileText, Calendar, Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ interface ProfileUser {
     email: string;
     role: string;
     subscription: string;
+    siteUrl: string | null;
     createdAt: string;
 }
 
@@ -58,6 +59,11 @@ export default function ProfilePage() {
     const [nameVal, setNameVal] = useState("");
     const [savingName, setSavingName] = useState(false);
 
+    // Site URL editing
+    const [editUrl, setEditUrl] = useState(false);
+    const [urlVal, setUrlVal] = useState("");
+    const [savingUrl, setSavingUrl] = useState(false);
+
     // Password section
     const [pwSection, setPwSection] = useState(false);
     const [currentPw, setCurrentPw] = useState("");
@@ -73,7 +79,11 @@ export default function ProfilePage() {
         fetch("/api/profile")
             .then(r => r.json())
             .then(d => {
-                if (d.user) { setUser(d.user); setNameVal(d.user.name || ""); }
+                if (d.user) { 
+                    setUser(d.user); 
+                    setNameVal(d.user.name || ""); 
+                    setUrlVal(d.user.siteUrl || "");
+                }
                 if (d.stats) setStats(d.stats);
             })
             .catch(() => showToast("error", "Failed to load profile"))
@@ -98,6 +108,27 @@ export default function ProfilePage() {
             showToast("error", e instanceof Error ? e.message : "Update failed");
         } finally {
             setSavingName(false);
+        }
+    }
+
+    async function saveUrl() {
+        if (urlVal === (user?.siteUrl || "")) { setEditUrl(false); return; }
+        setSavingUrl(true);
+        try {
+            const r = await fetch("/api/profile", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ siteUrl: urlVal.trim() }),
+            });
+            const d = await r.json();
+            if (!r.ok) throw new Error(d.error || "Failed");
+            setUser(prev => prev ? { ...prev, siteUrl: urlVal.trim() || null } : prev);
+            showToast("success", "Website URL updated successfully");
+            setEditUrl(false);
+        } catch (e: unknown) {
+            showToast("error", e instanceof Error ? e.message : "Update failed");
+        } finally {
+            setSavingUrl(false);
         }
     }
 
@@ -212,6 +243,41 @@ export default function ProfilePage() {
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Calendar className="h-4 w-4 shrink-0" />
                                 <span>Member since <span className="text-foreground font-medium">{memberSince}</span></span>
+                            </div>
+                            
+                            {/* Site URL row */}
+                            <div className="pt-2 border-t border-border/50 mt-3">
+                                <label className="text-xs text-muted-foreground font-medium mb-1 block">Primary Website</label>
+                                <div className="flex items-center gap-2">
+                                    {editUrl ? (
+                                        <div className="flex items-center gap-2 flex-1">
+                                            <Input
+                                                value={urlVal}
+                                                onChange={e => setUrlVal(e.target.value)}
+                                                onKeyDown={e => { if (e.key === "Enter") saveUrl(); if (e.key === "Escape") setEditUrl(false); }}
+                                                placeholder="https://yourwebsite.com"
+                                                className="h-8 text-sm max-w-sm"
+                                                autoFocus
+                                            />
+                                            <Button size="sm" onClick={saveUrl} disabled={savingUrl} className="h-8 gap-1 bg-indigo-600 hover:bg-indigo-700">
+                                                {savingUrl ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Save
+                                            </Button>
+                                            <Button size="sm" variant="ghost" onClick={() => { setEditUrl(false); setUrlVal(user?.siteUrl || ""); }} className="h-8">
+                                                <X className="h-3.5 w-3.5" />
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="p-2 rounded-lg bg-background border border-border flex items-center gap-2 flex-1 max-w-sm">
+                                                <Globe className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+                                                <span className="text-sm truncate">{user?.siteUrl || <span className="text-muted-foreground italic">No website link added</span>}</span>
+                                            </div>
+                                            <button onClick={() => setEditUrl(true)} className="text-muted-foreground hover:text-foreground transition-colors p-1" title="Edit website">
+                                                <Edit2 className="h-3.5 w-3.5" />
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>

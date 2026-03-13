@@ -31,7 +31,7 @@ RankBoast is a state-of-the-art SEO platform designed to help digital marketers 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repo/rankboast.git
+   git clone https://github.com/AbdulRehman9009/Rankboast
    cd rankboast
    ```
 

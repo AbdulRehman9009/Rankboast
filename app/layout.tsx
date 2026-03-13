@@ -21,6 +21,10 @@ export const metadata: Metadata = {
   description: "Advanced SEO competitor analysis, audit tool, and content generator powered by AI.",
   keywords: ["SEO", "Audit", "Competitor Analysis", "AI Content", "Rank Tracker"],
   authors: [{ name: "RankBoast Team" }],
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -30,9 +34,9 @@ export const metadata: Metadata = {
     description: "The ultimate tool for SEO professionals to analyze competitors and generate optimized content.",
     images: [
       {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
+        url: "/icon.png",
+        width: 800,
+        height: 800,
         alt: "RankBoast Logo",
       },
     ],

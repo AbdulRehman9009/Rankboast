@@ -7,7 +7,7 @@ const envSchema = z.object({
   OPENROUTER_API_KEY: z.string().min(1),
   SMTP_HOST: z.string().min(1),
   SMTP_PORT: z.coerce.number(),
-  SMTP_SECURE: z.coerce.boolean(),
+  SMTP_SECURE: z.preprocess((val) => val === "true" || val === "1", z.boolean()),
   SMTP_USER: z.string().email(),
   SMTP_PASS: z.string().min(1),
   GOOGLE_CLIENT_ID: z.string().min(1),

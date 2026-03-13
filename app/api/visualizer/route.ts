@@ -6,6 +6,7 @@ import OpenAI from "openai";
 import * as cheerio from "cheerio";
 import axios from "axios";
 import { URL } from "url";
+import { env } from "@/lib/env";
 
 // ── GET — return projects history & stats ────────────────────────────────────
 export async function GET(req: Request) {
@@ -94,12 +95,20 @@ async function crawlInternalLinks(startUrl: string, maxDepth = 3, maxPages = 50)
     visited.add(url);
 
     try {
+      const isStartUrl = url === startUrl;
       const { data } = await axios.get(url, { 
         timeout: 8000,
         headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-          "Accept-Language": "en-US,en;q=0.5",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+          "Accept-Language": "en-US,en;q=0.9",
+          "Accept-Encoding": "gzip, deflate, br",
+          "Sec-Fetch-Dest": "document",
+          "Sec-Fetch-Mode": "navigate",
+          "Sec-Fetch-Site": "none",
+          "Sec-Fetch-User": "?1",
+          "Upgrade-Insecure-Requests": "1",
+          "Cache-Control": "max-age=0",
         }
       });
       const $ = cheerio.load(data);
@@ -136,8 +145,13 @@ async function crawlInternalLinks(startUrl: string, maxDepth = 3, maxPages = 50)
         snippet,
         links: [...new Set(internalLinks)],
       });
-    } catch (err) {
-      console.error(`Failed to crawl ${url}:`, err);
+    } catch (err: any) {
+      if (err.response?.status === 403 || err.response?.status === 401) {
+        if (url === startUrl) {
+          throw new Error(`Access Denied: ${url} blocks automated analysis. This site might be protected by a firewall or anti-bot system.`);
+        }
+      }
+      console.error(`Failed to crawl ${url}:`, err.message);
     }
   }
 
@@ -146,14 +160,14 @@ async function crawlInternalLinks(startUrl: string, maxDepth = 3, maxPages = 50)
 
 // ── AI Semantic Analysis Helper ──────────────────────────────────────────────
 async function getAIRecommendation(orphan: any, potentialParents: any[]) {
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey = env.OPENROUTER_API_KEY;
   if (!apiKey) return null;
 
   const client = new OpenAI({
     baseURL: "https://openrouter.ai/api/v1",
     apiKey: apiKey,
     defaultHeaders: {
-      "HTTP-Referer": process.env.NEXTAUTH_URL || "http://localhost:3000",
+      "HTTP-Referer": env.NEXTAUTH_URL,
       "X-Title": "RankBoast"
     }
   });
@@ -187,7 +201,8 @@ async function getAIRecommendation(orphan: any, potentialParents: any[]) {
     const completion = await client.chat.completions.create({
       model: "google/gemini-2.0-flash-001",
       messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
+      max_tokens: 500,
     });
 
     const aiText = completion.choices?.[0]?.message?.content?.trim() || "";
@@ -327,8 +342,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ nodes, links });
   } catch (err: any) {
-    console.error("POST /api/visualizer Error:", err.message, err.stack);
-    const msg = err instanceof Error ? err.message : "Internal Error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error("POST /api/visualizer Error:", err.message);
+    const msg = err.message || "Internal Error";
+    const status = msg.includes("Access Denied") ? 403 : 500;
+    return NextResponse.json({ error: msg }, { status });
   }
 }

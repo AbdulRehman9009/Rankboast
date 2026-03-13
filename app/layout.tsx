@@ -14,8 +14,39 @@ const roboto = Roboto({
 })
 
 export const metadata: Metadata = {
-  title: "RankBoast - AI-Powered SEO Analysis",
-  description: "Advanced SEO competitor analysis and audit tool",
+  title: {
+    default: "RankBoast - AI-Powered SEO Analysis",
+    template: "%s | RankBoast",
+  },
+  description: "Advanced SEO competitor analysis, audit tool, and content generator powered by AI.",
+  keywords: ["SEO", "Audit", "Competitor Analysis", "AI Content", "Rank Tracker"],
+  authors: [{ name: "RankBoast Team" }],
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://rankboast.com",
+    siteName: "RankBoast",
+    title: "RankBoast - Boost Your Search Rankings",
+    description: "The ultimate tool for SEO professionals to analyze competitors and generate optimized content.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "RankBoast Logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "RankBoast - AI-Powered SEO Analysis",
+    description: "Advanced SEO competitor analysis and audit tool.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

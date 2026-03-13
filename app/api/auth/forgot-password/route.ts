@@ -1,15 +1,22 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { sendPasswordResetEmail } from "@/lib/email";
 import crypto from "crypto";
 
 export async function POST(req: Request) {
     try {
-        const { email } = await req.json();
+        const body = await req.json();
+        const result = z.object({
+            email: z.string().email("A valid email is required"),
+        }).safeParse(body);
 
-        if (!email || typeof email !== "string") {
-            return NextResponse.json({ error: "Email is required" }, { status: 400 });
+        if (!result.success) {
+            return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
         }
+
+        const { email } = result.data;
 
         // Always return success to prevent email enumeration
         const user = await prisma.user.findUnique({
@@ -29,7 +36,7 @@ export async function POST(req: Request) {
                 data: { token, userId: user.id, expires },
             });
 
-            const appUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+            const appUrl = env.NEXTAUTH_URL;
             const resetUrl = `${appUrl}/auth/reset-password?token=${token}`;
 
             // Fire-and-forget (don't block response on email send)

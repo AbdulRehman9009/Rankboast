@@ -60,6 +60,7 @@ export default function VisualizerPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [multiHistory, setMultiHistory] = useState<MultiHistory>({ audit: [], competitor: [], content: [] });
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [isHistLoading, setIsHistLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [activeNode, setActiveNode] = useState<VisualizerNode | null>(null);
   const [userSiteUrl, setUserSiteUrl] = useState<string | null>(null);
@@ -148,7 +149,7 @@ export default function VisualizerPage() {
   };
 
   const handleLoadHistory = async (projectId: string) => {
-    setIsCrawling(true);
+    setIsHistLoading(true);
     setErrorMsg("");
     setData(null);
     setActiveNode(null);
@@ -160,7 +161,7 @@ export default function VisualizerPage() {
     } catch (err: any) {
       setErrorMsg(err.message);
     } finally {
-      setIsCrawling(false);
+      setIsHistLoading(false);
     }
   };
 
@@ -268,10 +269,11 @@ export default function VisualizerPage() {
                       <button
                         key={item.id}
                         onClick={() => handleLoadHistory(item.id)}
-                        className="flex items-center gap-4 p-4 rounded-xl hover:bg-muted/50 transition-all border border-transparent hover:border-border group text-left"
+                        disabled={isHistLoading}
+                        className="flex items-center gap-4 p-4 rounded-xl hover:bg-muted/50 transition-all border border-transparent hover:border-border group text-left disabled:opacity-50"
                       >
                         <div className="h-10 w-10 bg-indigo-500/10 text-indigo-500 rounded-lg flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition-colors">
-                          <Globe className="h-5 w-5" />
+                          {isHistLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Globe className="h-5 w-5" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold truncate uppercase tracking-tight">{item.domain}</p>

@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import OpenAI from "openai";
+import { env } from "@/lib/env";
+
+const contentSchema = z.object({
+  topic: z.string().min(3),
+  keywords: z.string().min(3),
+  tone: z.string(),
+  audience: z.string(),
+  wordcount: z.coerce.number().min(100).max(5000),
+});
 
 export async function POST(request: Request) {
   try {
@@ -12,13 +22,15 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { topic, keywords, tone, audience, wordcount } = body;
+    const result = contentSchema.safeParse(body);
 
-    if (!topic || !keywords || !tone || !audience || !wordcount) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!result.success) {
+      return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
     }
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const { topic, keywords, tone, audience, wordcount } = result.data;
+
+    const apiKey = env.OPENROUTER_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: "AI API key not configured" }, { status: 500 });
     }
@@ -27,7 +39,7 @@ export async function POST(request: Request) {
       baseURL: "https://openrouter.ai/api/v1",
       apiKey: apiKey,
       defaultHeaders: {
-        "HTTP-Referer": process.env.NEXTAUTH_URL || "http://localhost:3000",
+        "HTTP-Referer": env.NEXTAUTH_URL,
         "X-Title": "RankBoast"
       }
     });
@@ -88,7 +100,7 @@ Generate the JSON object now:`;
         keywords,
         tone,
         audience,
-        wordCount: parseInt(wordcount),
+        wordCount: wordcount,
         seoTitle: content.seoTitle,
         metaDescription: content.metaDescription,
         articleBody: content.articleBody,

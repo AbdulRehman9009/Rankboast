@@ -1,18 +1,19 @@
 import nodemailer from "nodemailer";
+import { env } from "./env";
 
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: process.env.SMTP_SECURE === "true", // true for port 465
+    host: env.SMTP_HOST,
+    port: env.SMTP_PORT,
+    secure: env.SMTP_SECURE,
     auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASS,
     },
 });
 
 export async function sendPasswordResetEmail(to: string, resetUrl: string) {
     const appName = "RankBoast";
-    const from = `"${appName}" <${process.env.SMTP_USER}>`;
+    const from = `"${appName}" <${env.SMTP_USER}>`;
 
     await transporter.sendMail({
         from,

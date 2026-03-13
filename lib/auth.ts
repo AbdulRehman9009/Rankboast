@@ -5,6 +5,7 @@ import { prisma } from "./prisma";
 import { compare } from "bcryptjs";
 import { signInSchema } from "./schemas";
 import GoogleProvider from "next-auth/providers/google";
+import { env } from "./env";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma as any),
@@ -13,8 +14,8 @@ export const authOptions: NextAuthOptions = {
   },
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
       // Optional: Allows linking a Google account to an existing email/password account
       allowDangerousEmailAccountLinking: true,
     }),
@@ -73,5 +74,5 @@ export const authOptions: NextAuthOptions = {
     signIn: "/auth/signin",
     error: "/auth/signin",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: env.NEXTAUTH_SECRET,
 };

@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { env } from "@/lib/env";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -180,13 +182,18 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json();
-        const { userUrl, competitorUrl } = body;
+        const result = z.object({
+            userUrl: z.string().url("Invalid user URL"),
+            competitorUrl: z.string().url("Invalid competitor URL"),
+        }).safeParse(body);
 
-        if (!userUrl || !competitorUrl) {
-            return NextResponse.json({ error: "Both userUrl and competitorUrl are required." }, { status: 400 });
+        if (!result.success) {
+            return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
         }
 
-        const apiKey = process.env.OPENROUTER_API_KEY;
+        const { userUrl, competitorUrl } = result.data;
+
+        const apiKey = env.OPENROUTER_API_KEY;
         if (!apiKey) {
             return NextResponse.json({ error: "OPENROUTER_API_KEY is not configured." }, { status: 500 });
         }
@@ -195,7 +202,7 @@ export async function POST(req: Request) {
             baseURL: "https://openrouter.ai/api/v1",
             apiKey,
             defaultHeaders: {
-                "HTTP-Referer": process.env.NEXTAUTH_URL || "http://localhost:3000",
+                "HTTP-Referer": env.NEXTAUTH_URL,
                 "X-Title": "RankBoast",
             },
         });

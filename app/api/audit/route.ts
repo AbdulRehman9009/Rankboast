@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import axios from "axios";
 import * as cheerio from "cheerio";
 import OpenAI from "openai";
 import { prisma } from "@/lib/prisma";
+import { env } from "@/lib/env";
 
 export async function GET() {
   try {
@@ -48,11 +50,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User not found or session expired. Please sign in again." }, { status: 401 });
     }
 
-    const { url } = await req.json();
+    const body = await req.json();
+    const result = z.object({
+      url: z.string().url("A valid URL is required"),
+    }).safeParse(body);
 
-    if (!url) {
-      return NextResponse.json({ error: "URL is required" }, { status: 400 });
+    if (!result.success) {
+      return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
     }
+
+    const { url } = result.data;
 
     // 1. Scrape the URL
     let htmlData;
@@ -94,7 +101,7 @@ export async function POST(req: Request) {
       imagesMissingAlt
     };
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const apiKey = env.OPENROUTER_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: "OPENROUTER_API_KEY is not configured on the server." }, { status: 500 });
     }
@@ -103,7 +110,7 @@ export async function POST(req: Request) {
       baseURL: "https://openrouter.ai/api/v1",
       apiKey: apiKey,
       defaultHeaders: {
-        "HTTP-Referer": process.env.NEXTAUTH_URL || "http://localhost:3000",
+        "HTTP-Referer": env.NEXTAUTH_URL,
         "X-Title": "RankBoast"
       }
     });

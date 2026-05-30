@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       baseURL: "https://openrouter.ai/api/v1",
       apiKey: apiKey,
       defaultHeaders: {
-        "HTTP-Referer": env.NEXTAUTH_URL,
+        "HTTP-Referer": env.NEXTAUTH_URL || "http://localhost:3000",
         "X-Title": "RankBoast"
       }
     });
@@ -70,29 +70,35 @@ No preamble, no conversational filler, and no markdown code blocks.
 
 Generate the JSON object now:`;
 
+    const calculatedMaxTokens = Math.min(Math.ceil(wordcount * 1.45) + 600, 8000);
+
     const completion = await client.chat.completions.create({
-      model: "stepfun/step-3.5-flash:free",
+      model: "deepseek/deepseek-chat",
+      max_tokens: calculatedMaxTokens, 
       messages: [
         {
           role: "user",
           content: prompt
         }
-      ]
+      ],
+      response_format: { type: "json_object" } 
     });
 
     let aiText = completion.choices?.[0]?.message?.content?.trim() || "";
 
-    aiText = aiText.replace(/^```json/, "").replace(/^```/, "").replace(/```$/, "").trim();
+    const jsonMatch = aiText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      aiText = jsonMatch[0];
+    }
 
     let content;
     try {
       content = JSON.parse(aiText);
     } catch (parseError) {
-      console.error("AI JSON Parse Error:");
+      console.error("AI JSON Parse Error. Raw Output received was:", aiText);
       return NextResponse.json({ error: "AI returned invalid JSON format" }, { status: 500 });
     }
 
-    // Save to Database
     const savedContent = await prisma.generatedContent.create({
       data: {
         userId: session.user.id,
@@ -101,10 +107,10 @@ Generate the JSON object now:`;
         tone,
         audience,
         wordCount: wordcount,
-        seoTitle: content.seoTitle,
-        metaDescription: content.metaDescription,
-        articleBody: content.articleBody,
-        keywordsUsed: content.keywordsUsed,
+        seoTitle: content.seoTitle || "Untitled SEO Article",
+        metaDescription: content.metaDescription || "",
+        articleBody: content.articleBody || "",
+        keywordsUsed: Array.isArray(content.keywordsUsed) ? content.keywordsUsed : [keywords],
       },
     });
 
@@ -117,6 +123,7 @@ Generate the JSON object now:`;
       wordCount: savedContent.wordCount,
       createdAt: savedContent.createdAt,
     });
+
   } catch (error: unknown) {
     console.error("Generation Error:", error);
     return NextResponse.json(
